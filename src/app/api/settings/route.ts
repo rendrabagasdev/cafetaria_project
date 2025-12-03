@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const {
       kasirWhatsapp,
-      namamPengurus,
+      namaPengurus,
       cafeteriaName,
       cafeteriaTagline,
       heroTitle,
@@ -87,7 +87,7 @@ export async function PUT(request: NextRequest) {
       where: { id: 1 },
       data: {
         ...(kasirWhatsapp !== undefined && { kasirWhatsapp }),
-        ...(namamPengurus !== undefined && { namamPengurus }),
+        ...(namaPengurus !== undefined && { namaPengurus }),
         ...(cafeteriaName !== undefined && { cafeteriaName }),
         ...(cafeteriaTagline !== undefined && { cafeteriaTagline }),
         ...(heroTitle !== undefined && { heroTitle }),
