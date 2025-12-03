@@ -186,33 +186,79 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch item details (including hargaSatuan) from database
-    const itemsWithPrices = await Promise.all(
-      items.map(async (item: { itemId: number; quantity: number }) => {
-        const dbItem = await prisma.item.findUnique({
-          where: { id: item.itemId },
-          select: { hargaSatuan: true },
-        });
+    // ✅ OPTIMIZATION: Fetch ALL items data BEFORE transaction starts
+    const itemIds = items.map(
+      (item: { itemId: number; quantity: number }) => item.itemId
+    );
+    const dbItems = await prisma.item.findMany({
+      where: { id: { in: itemIds } },
+      select: {
+        id: true,
+        hargaSatuan: true,
+        jumlahStok: true,
+        namaBarang: true,
+      },
+    });
 
-        if (!dbItem) {
-          throw new Error(`Item with ID ${item.itemId} not found`);
-        }
+    // Validate all items exist
+    const itemsMap = new Map(dbItems.map((item) => [item.id, item]));
+    for (const item of items) {
+      if (!itemsMap.has(item.itemId)) {
+        return NextResponse.json(
+          { error: `Item with ID ${item.itemId} not found` },
+          { status: 404 }
+        );
+      }
+    }
 
+    // ✅ OPTIMIZATION: Calculate everything BEFORE transaction
+    const itemsWithPrices = items.map(
+      (item: { itemId: number; quantity: number }) => {
+        const dbItem = itemsMap.get(item.itemId)!;
         return {
           hargaSatuan: dbItem.hargaSatuan,
           quantity: item.quantity,
         };
-      })
+      }
     );
 
-    // Calculate cart total
     const cartTotal = calculateCartTotal(itemsWithPrices);
-
-    // Calculate fees based on payment method
     const fees = await calculateFees(cartTotal, paymentMethod as PaymentMethod);
-
-    // Generate Midtrans order ID
     const midtransOrderId = generateOrderId();
+
+    // ✅ OPTIMIZATION: Prepare transaction details BEFORE transaction
+    const transactionDetails = items.map(
+      (cartItem: { itemId: number; quantity: number }) => {
+        const dbItem = itemsMap.get(cartItem.itemId)!;
+        const stokSebelum = dbItem.jumlahStok;
+        const stokSesudah = stokSebelum - cartItem.quantity;
+        const hargaSatuan = new Decimal(dbItem.hargaSatuan.toString());
+        const subtotal = hargaSatuan.mul(cartItem.quantity);
+
+        return {
+          itemId: cartItem.itemId,
+          jumlah: cartItem.quantity,
+          hargaSatuan: hargaSatuan,
+          subtotal: subtotal,
+          stokSebelum,
+          stokSesudah,
+        };
+      }
+    );
+
+    // Determine transaction status
+    const status: TransactionStatus =
+      paymentMethod === "CASH" ? "CASH" : "PENDING";
+
+    // ✅ OPTIMIZATION: Get PosSession ID BEFORE transaction
+    let posSessionDbId: number | null = null;
+    if (posSessionId) {
+      const posSession = await prisma.posSession.findUnique({
+        where: { sessionId: posSessionId },
+        select: { id: true },
+      });
+      posSessionDbId = posSession?.id || null;
+    }
 
     // Create QRIS payment if payment method is QRIS
     let qrisData = null;
@@ -249,111 +295,92 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create transaction with atomic stock deduction
-    const transaction = await prisma.$transaction(async (tx) => {
-      // Prepare transaction details with stock snapshots
-      const transactionDetails = [];
-
-      for (const cartItem of items) {
-        const item = await tx.item.findUnique({
-          where: { id: cartItem.itemId },
-        });
-
-        if (!item) {
-          throw new Error(`Item ${cartItem.itemId} not found`);
-        }
-
-        const stokSebelum = item.jumlahStok;
-        const stokSesudah = stokSebelum - cartItem.quantity;
-        const hargaSatuan = new Decimal(item.hargaSatuan.toString());
-        const subtotal = hargaSatuan.mul(cartItem.quantity);
-
-        transactionDetails.push({
-          itemId: cartItem.itemId,
-          jumlah: cartItem.quantity,
-          hargaSatuan: hargaSatuan,
-          subtotal: subtotal,
-          stokSebelum,
-          stokSesudah,
-        });
-      }
-
-      // Determine transaction status
-      let status: TransactionStatus;
-      if (paymentMethod === "CASH") {
-        status = "CASH"; // Cash immediately settled
-      } else {
-        status = "PENDING"; // QRIS awaiting payment
-      }
-
-      // Get PosSession ID (integer) from sessionId (UUID string) if provided
-      let posSessionDbId: number | null = null;
-      if (posSessionId) {
-        const posSession = await prisma.posSession.findUnique({
-          where: { sessionId: posSessionId },
-          select: { id: true },
-        });
-        posSessionDbId = posSession?.id || null;
-      }
-
-      // Create transaction record
-      const newTransaction = await tx.transaction.create({
-        data: {
-          userId: parseInt(token.id as string),
-          posSessionId: posSessionDbId,
-          firebaseSessionId: posSessionId || null, // 🔥 STORE Firebase UUID for webhook updates
-          grossAmount: fees.grossAmount,
-          paymentFee: fees.paymentFee,
-          platformFee: fees.platformFee,
-          netAmount: fees.netAmount,
-          mitraRevenue: fees.mitraRevenue,
-          paymentMethod: paymentMethod as PaymentMethod,
-          status,
-          midtransOrderId: paymentMethod === "QRIS" ? midtransOrderId : null,
-          qrisUrl: qrisData?.qrisUrl || null,
-          paymentExpireAt: qrisData?.expireTime
-            ? new Date(qrisData.expireTime)
-            : null,
-          customerName: customerName || null,
-          customerLocation: customerLocation || null,
-          notes: notes || null,
-          createdBy: parseInt(token.id as string),
-          details: {
-            create: transactionDetails,
+    // ✅ OPTIMIZATION: Transaction with increased timeout and batch operations
+    const transaction = await prisma.$transaction(
+      async (tx) => {
+        // Create transaction record with batch insert for details
+        const newTransaction = await tx.transaction.create({
+          data: {
+            userId: parseInt(token.id as string),
+            posSessionId: posSessionDbId,
+            firebaseSessionId: posSessionId || null,
+            grossAmount: fees.grossAmount,
+            paymentFee: fees.paymentFee,
+            platformFee: fees.platformFee,
+            netAmount: fees.netAmount,
+            mitraRevenue: fees.mitraRevenue,
+            paymentMethod: paymentMethod as PaymentMethod,
+            status,
+            midtransOrderId: paymentMethod === "QRIS" ? midtransOrderId : null,
+            qrisUrl: qrisData?.qrisUrl || null,
+            paymentExpireAt: qrisData?.expireTime
+              ? new Date(qrisData.expireTime)
+              : null,
+            customerName: customerName || null,
+            customerLocation: customerLocation || null,
+            notes: notes || null,
+            createdBy: parseInt(token.id as string),
           },
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
             },
           },
-          details: {
-            include: {
-              item: {
-                select: {
-                  id: true,
-                  namaBarang: true,
-                  hargaSatuan: true,
-                  fotoUrl: true,
-                },
+        });
+
+        // ✅ OPTIMIZATION: Use createMany for batch insert of transaction details
+        await tx.transactionDetail.createMany({
+          data: transactionDetails.map((detail) => ({
+            ...detail,
+            transactionId: newTransaction.id,
+          })),
+        });
+
+        // Deduct stock for all items (only for CASH, QRIS waits for webhook)
+        if (paymentMethod === "CASH") {
+          for (const cartItem of items) {
+            await deductStock(cartItem.itemId, cartItem.quantity, tx);
+          }
+        }
+
+        return newTransaction;
+      },
+      {
+        maxWait: 10000, // ✅ Max wait time to acquire connection (10s)
+        timeout: 15000, // ✅ Max transaction execution time (15s)
+      }
+    );
+
+    // Fetch details with items for response (after transaction)
+    const transactionWithDetails = await prisma.transaction.findUnique({
+      where: { id: transaction.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        details: {
+          include: {
+            item: {
+              select: {
+                id: true,
+                namaBarang: true,
+                hargaSatuan: true,
+                fotoUrl: true,
               },
             },
           },
         },
-      });
-
-      // Deduct stock for all items (only for CASH, QRIS waits for webhook)
-      if (paymentMethod === "CASH") {
-        for (const cartItem of items) {
-          await deductStock(cartItem.itemId, cartItem.quantity, tx);
-        }
-      }
-
-      return newTransaction;
+      },
     });
 
     logger.info("Transaction created successfully", {
@@ -366,7 +393,7 @@ export async function POST(request: NextRequest) {
       itemCount: items.length,
     });
 
-    // Trigger Firebase untuk stock updates (untuk CASH yang langsung deduct)
+    // Trigger Firebase voor stock updates (voor CASH yang langsung deduct)
     if (paymentMethod === "CASH") {
       try {
         const firebaseAdmin = await import("@/lib/firebase-admin");
@@ -379,7 +406,7 @@ export async function POST(request: NextRequest) {
         const affectedItems = await prisma.item.findMany({
           where: {
             id: {
-              in: items.map((item) => item.itemId),
+              in: items.map((item: { itemId: number }) => item.itemId),
             },
           },
           select: {
@@ -453,7 +480,7 @@ export async function POST(request: NextRequest) {
         qrisUrl: transaction.qrisUrl,
         paymentExpireAt: transaction.paymentExpireAt,
         createdAt: transaction.createdAt.toISOString(),
-        details: transaction.details?.map((detail) => ({
+        details: transactionWithDetails?.details?.map((detail) => ({
           id: detail.id,
           itemId: detail.itemId,
           jumlah: detail.jumlah,
@@ -466,12 +493,40 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    // ✅ Enhanced error handling for Prisma connection and timeout errors
+    if (error.code === "P1001") {
+      logger.error("Database connection failed", {
+        service: "API",
+        action: "POST /api/transactions",
+        errorCode: error.code,
+        errorMessage: error.message,
+      });
+      return NextResponse.json(
+        { error: "Database connection failed. Please try again later." },
+        { status: 503 }
+      );
+    }
+
+    if (error.code === "P2028") {
+      logger.error("Transaction timeout", {
+        service: "API",
+        action: "POST /api/transactions",
+        errorCode: error.code,
+        errorMessage: error.message,
+      });
+      return NextResponse.json(
+        { error: "Transaction timeout. Please try again." },
+        { status: 408 }
+      );
+    }
+
     logger.error(
       "Failed to create transaction",
       {
         service: "API",
         action: "POST /api/transactions",
         errorMessage: error.message,
+        errorCode: error.code,
       },
       error
     );
