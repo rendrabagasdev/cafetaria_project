@@ -3,7 +3,7 @@
  * Custom hook untuk fetch data berdasarkan active tab
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   PengurusItem,
   PengurusTransaction,

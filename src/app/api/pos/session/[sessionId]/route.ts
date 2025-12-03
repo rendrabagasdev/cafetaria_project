@@ -7,9 +7,9 @@ import {
 import { logger } from "@/lib/logger";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     sessionId: string;
-  };
+  }>;
 }
 
 /**

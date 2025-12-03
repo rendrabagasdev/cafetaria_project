@@ -27,5 +27,7 @@ export default function PengurusDashboard() {
     return null;
   }
 
-  return <PengurusDashboardPage pengurusName={session.user.nama} />;
+  return (
+    <PengurusDashboardPage pengurusName={session.user.name || "Pengurus"} />
+  );
 }

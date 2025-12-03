@@ -13,7 +13,6 @@ import { CartItem, CheckoutFormData } from "../types";
 import { formatCurrency } from "@/lib/cart-utils";
 import {
   MessageCircle,
-  CreditCard,
   Banknote,
   Plus,
   Minus,

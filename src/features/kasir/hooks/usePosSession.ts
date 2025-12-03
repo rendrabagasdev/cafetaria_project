@@ -16,6 +16,7 @@ export function usePosSession() {
   const [showSessionQR, setShowSessionQR] = useState(false);
 
   const createSession = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async (kasirId: number, kasirName: string) => {
       try {
         // API route handles Firebase initialization server-side

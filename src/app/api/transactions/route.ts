@@ -424,6 +424,8 @@ export async function POST(request: NextRequest) {
       });
 
       logger.info("Firebase trigger sent for new transaction", {
+        service: "API",
+        action: "POST /api/transactions",
         transactionId: transaction.id,
       });
     } catch (firebaseError: any) {

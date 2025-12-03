@@ -107,7 +107,9 @@ export function DualScreenQRModal({
                     Cara Menggunakan:
                   </p>
                   <ol className="text-sm text-blue-800 space-y-1.5 list-decimal list-inside">
-                    <li>Klik tombol "Buka Customer Display" di bawah</li>
+                    <li>
+                      Klik tombol &quot;Buka Customer Display&quot; di bawah
+                    </li>
                     <li>Atau scan QR code untuk buka di perangkat lain</li>
                     <li>Layar customer akan otomatis sync realtime</li>
                   </ol>

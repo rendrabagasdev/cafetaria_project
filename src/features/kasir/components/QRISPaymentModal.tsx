@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Clock, CheckCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getFirebaseDatabase } from "@/lib/firebase-client";
 import { ref, onValue } from "firebase/database";
 
@@ -29,6 +29,33 @@ export function QRISPaymentModal({
   const [status, setStatus] = useState<"pending" | "checking" | "success">(
     "pending"
   );
+
+  // Fallback polling jika Firebase tidak tersedia
+  const pollTransactionStatus = useCallback(() => {
+    const interval = setInterval(async () => {
+      try {
+        setStatus("checking");
+        const response = await fetch(`/api/transactions/${transactionId}`);
+        const data = await response.json();
+
+        if (data.status === "SETTLEMENT") {
+          setStatus("success");
+          setTimeout(() => {
+            onSuccess?.();
+            onClose();
+          }, 2000);
+          clearInterval(interval);
+        } else {
+          setStatus("pending");
+        }
+      } catch (error) {
+        console.error("Error checking transaction status:", error);
+        setStatus("pending");
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [transactionId, onSuccess, onClose]);
 
   useEffect(() => {
     if (!isOpen || !firebaseSessionId) {
@@ -74,34 +101,7 @@ export function QRISPaymentModal({
     });
 
     return () => unsubscribe();
-  }, [isOpen, firebaseSessionId, onSuccess, onClose]);
-
-  // Fallback polling jika Firebase tidak tersedia
-  const pollTransactionStatus = () => {
-    const interval = setInterval(async () => {
-      try {
-        setStatus("checking");
-        const response = await fetch(`/api/transactions/${transactionId}`);
-        const data = await response.json();
-
-        if (data.status === "SETTLEMENT") {
-          setStatus("success");
-          setTimeout(() => {
-            onSuccess?.();
-            onClose();
-          }, 2000);
-          clearInterval(interval);
-        } else {
-          setStatus("pending");
-        }
-      } catch (error) {
-        console.error("Error checking transaction status:", error);
-        setStatus("pending");
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  };
+  }, [isOpen, firebaseSessionId, onSuccess, onClose, pollTransactionStatus]);
 
   return (
     <AnimatePresence>

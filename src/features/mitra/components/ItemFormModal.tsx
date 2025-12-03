@@ -6,13 +6,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  X,
-  Upload,
-  Package,
-  DollarSign,
-  Image as ImageIcon,
-} from "lucide-react";
+import { X, Upload, Package, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { useItemForm } from "../hooks/useItemForm";
 import { MitraItem } from "../types";

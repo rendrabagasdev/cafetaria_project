@@ -64,7 +64,7 @@ export {
   clearFirebaseCart,
 } from "./firebase";
 
-export type { CartItem, PosSessionData } from "./firebase";
+export type { PosSessionData } from "./firebase";
 
 // Validation utilities
 export {

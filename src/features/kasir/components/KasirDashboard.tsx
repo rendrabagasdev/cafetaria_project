@@ -49,19 +49,22 @@ export function KasirDashboard() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const { onValue, ref, getDatabase } = require("firebase/database");
-    const { firebaseApp } = require("@/lib/firebase-client");
+    import("firebase/database").then(({ onValue, ref, getDatabase }) => {
+      import("@/lib/firebase-client").then(({ firebaseApp }) => {
+        if (!firebaseApp) {
+          console.warn("[KasirDashboard] Firebase not initialized");
+          return;
+        }
+        const db = getDatabase(firebaseApp);
+        const pendingRef = ref(db, "pending-orders-trigger");
 
-    const db = getDatabase(firebaseApp);
-    const pendingRef = ref(db, "pending-orders-trigger");
-
-    // Listen untuk perubahan di Firebase
-    const unsubscribe = onValue(pendingRef, (snapshot) => {
-      // Setiap kali ada perubahan, refresh pending orders
-      refreshPendingOrders();
+        // Listen untuk perubahan di Firebase
+        onValue(pendingRef, () => {
+          // Setiap kali ada perubahan, refresh pending orders
+          refreshPendingOrders();
+        });
+      });
     });
-
-    return () => unsubscribe();
   }, [refreshPendingOrders]);
 
   // Filter items based on search query
@@ -127,7 +130,7 @@ export function KasirDashboard() {
     try {
       // 🔥 Calculate total SEBELUM clear cart
       const totalAmount = cart.reduce(
-        (sum, c) => sum + c.item.hargaSatuan * c.quantity,
+        (sum, c) => sum + Number(c.item.hargaSatuan) * c.quantity,
         0
       );
 

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { subscribeToSession, FirebasePosSession } from "@/lib/firebase-client";
 
-export default function CustomerDisplay() {
+function CustomerDisplayContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("sessionId");
 
@@ -14,6 +14,25 @@ export default function CustomerDisplay() {
   );
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Fallback: fetch from API if Firebase returns null
+  const fetchSessionFromAPI = useCallback(async () => {
+    try {
+      console.log("[CUSTOMER] Fetching session from API as fallback...");
+      const response = await fetch(`/api/pos/session/${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("[CUSTOMER] Session fetched from API:", data.session);
+        setSessionData(data.session);
+        setError(null);
+      } else {
+        setError("Session tidak ditemukan");
+      }
+    } catch (err) {
+      console.error("[CUSTOMER] Failed to fetch from API:", err);
+      setError("Gagal mengambil data session");
+    }
+  }, [sessionId]);
 
   useEffect(() => {
     if (!sessionId) {
@@ -50,31 +69,7 @@ export default function CustomerDisplay() {
       console.log("[CUSTOMER] Unsubscribing from real-time updates");
       unsubscribe();
     };
-  }, [sessionId]);
-
-  // Fallback: fetch from API if Firebase returns null
-  const fetchSessionFromAPI = async () => {
-    try {
-      console.log("[CUSTOMER] Fetching session from API as fallback...");
-      const response = await fetch(`/api/pos/session/${sessionId}`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log("[CUSTOMER] Session fetched from API:", data.session);
-        setSessionData(data.session);
-        setError(null);
-      } else {
-        setError("Session tidak ditemukan");
-      }
-    } catch (err) {
-      console.error("[CUSTOMER] Failed to fetch from API:", err);
-      setError("Gagal mengambil data session");
-    }
-  };
-
-  const calculateTotal = () => {
-    if (!sessionData?.cart) return 0;
-    return sessionData.cart.reduce((sum, item) => sum + item.subtotal, 0);
-  };
+  }, [sessionId, fetchSessionFromAPI]);
 
   if (error) {
     return (
@@ -258,5 +253,24 @@ export default function CustomerDisplay() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function CustomerDisplay() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center p-8">
+          <div className="bg-white rounded-2xl shadow-2xl p-12 max-w-md text-center">
+            <div className="animate-spin text-6xl mb-4">⏳</div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">
+              Loading...
+            </h1>
+          </div>
+        </div>
+      }
+    >
+      <CustomerDisplayContent />
+    </Suspense>
   );
 }
