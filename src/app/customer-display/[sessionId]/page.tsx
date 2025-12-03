@@ -137,7 +137,7 @@ export default function CustomerDisplayPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 text-white p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
@@ -151,162 +151,189 @@ export default function CustomerDisplayPage() {
           </p>
         </motion.div>
 
-        {/* Cart Items */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 mb-6"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <ShoppingCart className="w-8 h-8" />
-            <h2 className="text-3xl font-bold">Keranjang Belanja</h2>
+        {/* Main Content - Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* LEFT SIDE - Cart Items */}
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white/10 backdrop-blur-lg rounded-3xl p-6"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <ShoppingCart className="w-7 h-7" />
+                <h2 className="text-2xl font-bold">Keranjang Belanja</h2>
+              </div>
+
+              <AnimatePresence mode="popLayout">
+                {cart.length === 0 ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center py-16 text-white/60"
+                  >
+                    <ShoppingCart className="w-20 h-20 mx-auto mb-4 opacity-30" />
+                    <p className="text-xl font-medium">
+                      Keranjang masih kosong
+                    </p>
+                    <p className="text-sm mt-2">
+                      Kasir sedang menambahkan item...
+                    </p>
+                  </motion.div>
+                ) : (
+                  <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                    {cart.map((item, index) => (
+                      <motion.div
+                        key={item.itemId}
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -30 }}
+                        transition={{ delay: index * 0.05 }}
+                        layout
+                        className="bg-white/20 rounded-xl p-3 flex items-center gap-3"
+                      >
+                        <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-white/10">
+                          <Image
+                            src={item.fotoUrl || "/placeholder.png"}
+                            alt={item.namaBarang}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-bold truncate">
+                            {item.namaBarang}
+                          </h3>
+                          <p className="text-sm text-white/80">
+                            {item.quantity} x {formatCurrency(item.hargaSatuan)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xl font-bold">
+                            {formatCurrency(item.subtotal)}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Total */}
+            {cart.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white rounded-2xl p-6 text-gray-900"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-2xl font-semibold">Total:</span>
+                  <span className="text-4xl font-bold text-emerald-600">
+                    {formatCurrency(total)}
+                  </span>
+                </div>
+              </motion.div>
+            )}
           </div>
 
-          <AnimatePresence mode="popLayout">
-            {cart.length === 0 ? (
+          {/* RIGHT SIDE - QRIS Payment */}
+          <div>
+            {sessionData.status === "PAYMENT" && sessionData.qrisUrl ? (
               <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-16 text-white/60"
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white rounded-3xl p-8 shadow-2xl sticky top-6"
               >
-                <ShoppingCart className="w-24 h-24 mx-auto mb-4 opacity-30" />
-                <p className="text-2xl font-medium">Keranjang masih kosong</p>
-                <p className="text-lg mt-2">
-                  Kasir sedang menambahkan item untuk Anda...
-                </p>
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center gap-3 bg-emerald-100 text-emerald-800 px-6 py-3 rounded-full mb-4">
+                    <QrCode className="w-6 h-6" />
+                    <span className="text-xl font-bold">Scan untuk Bayar</span>
+                  </div>
+                </div>
+
+                {/* QR Code Image */}
+                <div className="flex justify-center mb-6">
+                  <div className="bg-gradient-to-br from-emerald-50 to-green-50 p-6 rounded-2xl shadow-lg">
+                    <Image
+                      src={sessionData.qrisUrl}
+                      alt="QRIS Payment"
+                      width={280}
+                      height={280}
+                      className="rounded-xl"
+                      priority
+                    />
+                  </div>
+                </div>
+
+                {/* Payment Info */}
+                <div className="text-center space-y-4">
+                  <div className="bg-emerald-50 rounded-xl p-4">
+                    <p className="text-sm text-gray-600 mb-1">Total Bayar</p>
+                    <p className="text-3xl font-bold text-emerald-600">
+                      {formatCurrency(total)}
+                    </p>
+                  </div>
+
+                  {sessionData.expireAt && (
+                    <div className="flex items-center justify-center gap-2 text-orange-600 bg-orange-50 rounded-lg p-3">
+                      <Clock className="w-5 h-5" />
+                      <p className="text-sm font-medium">
+                        Berlaku s/d{" "}
+                        {new Date(sessionData.expireAt).toLocaleTimeString(
+                          "id-ID",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-gray-200 text-left">
+                    <p className="text-gray-600 text-sm space-y-2">
+                      <span className="block">
+                        1️⃣ Buka e-wallet (GoPay, OVO, Dana, dll)
+                      </span>
+                      <span className="block">2️⃣ Scan QR Code</span>
+                      <span className="block">3️⃣ Konfirmasi pembayaran</span>
+                      <span className="block">4️⃣ Tunggu notifikasi</span>
+                    </p>
+                  </div>
+                </div>
               </motion.div>
             ) : (
-              <div className="space-y-4">
-                {cart.map((item, index) => (
-                  <motion.div
-                    key={item.itemId}
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 50 }}
-                    transition={{ delay: index * 0.05 }}
-                    layout
-                    className="bg-white/20 rounded-2xl p-4 flex items-center gap-4"
-                  >
-                    <div className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-white/10">
-                      <Image
-                        src={item.fotoUrl || "/placeholder.png"}
-                        alt={item.namaBarang}
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold">{item.namaBarang}</h3>
-                      <p className="text-lg text-white/80">
-                        {item.quantity} x {formatCurrency(item.hargaSatuan)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-3xl font-bold">
-                        {formatCurrency(item.subtotal)}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* Total */}
-        {cart.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white rounded-3xl p-8 text-gray-900"
-          >
-            <div className="flex justify-between items-center">
-              <span className="text-3xl font-semibold">Total Pembayaran:</span>
-              <span className="text-5xl font-bold text-emerald-600">
-                {formatCurrency(total)}
-              </span>
-            </div>
-          </motion.div>
-        )}
-
-        {/* 🔥 QRIS Payment Section - Muncul otomatis saat kasir generate QRIS */}
-        {sessionData.status === "PAYMENT" && sessionData.qrisUrl && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-8 bg-white rounded-3xl p-8 shadow-2xl"
-          >
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-3 bg-emerald-100 text-emerald-800 px-6 py-3 rounded-full mb-4">
-                <QrCode className="w-6 h-6" />
-                <span className="text-xl font-bold">
-                  Scan QR Code untuk Bayar
-                </span>
-              </div>
-            </div>
-
-            {/* QR Code Image */}
-            <div className="flex justify-center mb-6">
-              <div className="bg-white p-6 rounded-2xl shadow-lg">
-                <Image
-                  src={sessionData.qrisUrl}
-                  alt="QRIS Payment"
-                  width={300}
-                  height={300}
-                  className="rounded-xl"
-                  priority
-                />
-              </div>
-            </div>
-
-            {/* Payment Instructions */}
-            <div className="text-center space-y-3">
-              <p className="text-2xl font-bold text-gray-900">
-                Total: {formatCurrency(total)}
-              </p>
-              {sessionData.expireAt && (
-                <div className="flex items-center justify-center gap-2 text-orange-600">
-                  <Clock className="w-5 h-5" />
-                  <p className="text-lg font-medium">
-                    Berlaku hingga:{" "}
-                    {new Date(sessionData.expireAt).toLocaleTimeString(
-                      "id-ID",
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }
-                    )}
-                  </p>
-                </div>
-              )}
-              <div className="pt-4 border-t border-gray-200">
-                <p className="text-gray-600 text-lg">
-                  1️⃣ Buka aplikasi e-wallet (GoPay, OVO, Dana, LinkAja, dll)
-                  <br />
-                  2️⃣ Scan QR Code di atas
-                  <br />
-                  3️⃣ Konfirmasi pembayaran
-                  <br />
-                  4️⃣ Tunggu notifikasi sukses
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 text-center sticky top-6"
+              >
+                <QrCode className="w-20 h-20 mx-auto mb-4 opacity-30" />
+                <p className="text-xl font-medium text-white/60">
+                  QR Code akan muncul di sini
                 </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
+                <p className="text-sm text-white/50 mt-2">
+                  Tunggu kasir memproses checkout
+                </p>
+              </motion.div>
+            )}
+          </div>
+        </div>
 
-        {/* 🔥 Payment Success - Muncul otomatis dari webhook */}
+        {/* Payment Success - Full Width Below */}
         {sessionData.paymentStatus === "SETTLEMENT" && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, type: "spring" }}
-            className="mt-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl p-8 shadow-2xl text-white"
+            className="mt-6 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl p-8 shadow-2xl text-white"
           >
             <div className="text-center">
               <motion.div
@@ -346,18 +373,18 @@ export default function CustomerDisplayPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-8 bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-center"
+            transition={{ delay: 0.4 }}
+            className="mt-6 bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-center"
           >
-            <Phone className="w-12 h-12 mx-auto mb-3" />
-            <p className="text-xl font-semibold mb-3">Butuh Bantuan?</p>
+            <Phone className="w-10 h-10 mx-auto mb-3" />
+            <p className="text-lg font-semibold mb-3">Butuh Bantuan?</p>
             <a
               href={`https://wa.me/${whatsappNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl text-xl font-semibold transition-colors"
+              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-colors"
             >
-              <MessageCircle className="w-6 h-6" />
+              <MessageCircle className="w-5 h-5" />
               Hubungi Kasir
             </a>
           </motion.div>
@@ -367,10 +394,10 @@ export default function CustomerDisplayPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 text-center text-white/60"
+          transition={{ delay: 0.5 }}
+          className="mt-6 text-center text-white/60"
         >
-          <p className="text-lg">
+          <p className="text-sm">
             Terima kasih telah berbelanja di Cafetaria kami! 🙏
           </p>
         </motion.div>
