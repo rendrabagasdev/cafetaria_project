@@ -1,0 +1,242 @@
+// Production-ready Prisma Schema for School Cafeteria POS System
+// Supports dual-screen realtime sync, QRIS payments via Midtrans, cash fallback
+// Dynamic fee configuration, per-transaction accounting, and daily aggregates
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+// Role: User permissions and access levels
+enum Role {
+  USER      // Regular customer (can place orders)
+  KASIR     // Cashier (operates POS, approves transactions)
+  PENGURUS  // Administrator (full system access, settings management)
+  MITRA     // Student partner (sells items, receives revenue share)
+}
+
+// ItemStatus: Product availability and approval workflow
+enum ItemStatus {
+  TERSEDIA            // Available for sale
+  HABIS               // Out of stock
+  MENUNGGU_KONFIRMASI // Awaiting approval from PENGURUS
+  DITOLAK             // Rejected by PENGURUS
+  PENDING             // Initial state before review
+}
+
+// PaymentMethod: Supported payment types
+enum PaymentMethod {
+  QRIS // Dynamic QR payment via Midtrans
+  CASH // Cash payment (manual settlement)
+}
+
+// TransactionStatus: Payment and fulfillment lifecycle
+enum TransactionStatus {
+  PENDING    // Midtrans payment initiated, awaiting customer scan
+  SETTLEMENT // Midtrans confirmed payment success
+  EXPIRE     // Midtrans payment timeout (not paid within expiry)
+  CANCEL     // Midtrans payment cancelled
+  CASH       // Cash payment recorded (immediate settlement)
+  COMPLETED  // Order fulfilled and closed
+  REJECTED   // Order rejected by kasir (refund if QRIS)
+}
+
+// PosSessionStatus: Dual-screen session states
+enum PosSessionStatus {
+  OPEN    // Session active, accepting items
+  PAYMENT // Checkout initiated, awaiting payment
+  CLOSED  // Session finalized, transaction saved
+}
+
+// ============================================================================
+// MODELS
+// ============================================================================
+
+// User: Multi-role authentication and authorization
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String        @db.VarChar(255)
+  email        String        @unique @db.VarChar(255)
+  password     String        @db.VarChar(255)
+  role         Role          @default(USER)
+  
+  // Relations
+  items        Item[]        @relation("MitraItems")
+  transactions Transaction[] @relation("UserTransactions")
+  posSessions  PosSession[]  @relation("KasirSessions")
+  
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([role])
+  @@index([email])
+}
+
+// Item: Products sold by student partners (MITRA)
+model Item {
+  id                 Int                 @id @default(autoincrement())
+  namaBarang         String              @db.VarChar(255)
+  fotoUrl            String              @db.VarChar(500)
+  jumlahStok         Int                 @default(0)
+  hargaSatuan        Decimal             @db.Decimal(10, 2) // Use Decimal for money
+  status             ItemStatus          @default(PENDING)
+  
+  // Relations
+  mitra              User?               @relation("MitraItems", fields: [mitraId], references: [id], onDelete: SetNull)
+  mitraId            Int?
+  transactionDetails TransactionDetail[]
+  
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([mitraId])
+  @@index([status])
+  @@index([mitraId, status]) // Composite index for mitra dashboard queries
+}
+
+// PosSession: Represents active dual-screen POS session
+// Used to sync cart state between kasir screen and customer display via Firebase
+model PosSession {
+  id                  Int              @id @default(autoincrement())
+  sessionId           String           @unique @db.VarChar(100) // UUID for Firebase path
+  kasirId             Int              // KASIR user operating this session
+  status              PosSessionStatus @default(OPEN)
+  
+  // Firebase realtime sync path (optional, for reference)
+  firebaseSessionPath String?          @db.VarChar(255)
+  
+  // Relations
+  kasir               User             @relation("KasirSessions", fields: [kasirId], references: [id], onDelete: Cascade)
+  transactions        Transaction[]    @relation("SessionTransactions")
+  
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  closedAt            DateTime?        // When session was finalized
+
+  @@index([kasirId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Transaction: Financial record of completed sales
+// Authoritative source for revenue, fees, and commission calculations
+model Transaction {
+  id                Int                 @id @default(autoincrement())
+  
+  // Core transaction data
+  userId            Int                 // KASIR or USER who created transaction
+  posSessionId      Int?                // Link to POS session (if dual-screen)
+  firebaseSessionId String?             @db.VarChar(100) // Firebase session UUID for real-time updates
+  
+  // Financial amounts (all Decimal for precision)
+  grossAmount       Decimal             @db.Decimal(10, 2) // Total before fees
+  paymentFee        Decimal             @default(0) @db.Decimal(10, 2) // QRIS fee (calculated from Settings)
+  platformFee       Decimal             @default(0) @db.Decimal(10, 2) // Platform commission (calculated from Settings)
+  netAmount         Decimal             @db.Decimal(10, 2) // Amount after payment_fee, before platform_fee
+  mitraRevenue      Decimal             @db.Decimal(10, 2) // Net amount minus platform_fee (what mitra receives)
+  
+  // Payment details
+  paymentMethod     PaymentMethod       @default(QRIS)
+  status            TransactionStatus   @default(PENDING)
+  
+  // Midtrans integration fields
+  midtransOrderId   String?             @unique @db.VarChar(100) // Unique order ID sent to Midtrans
+  qrisUrl           String?             @db.VarChar(500) // Generated QR code URL for customer
+  paymentExpireAt   DateTime?           // Payment deadline (typically +5 minutes)
+  settledAt         DateTime?           // When Midtrans confirmed settlement
+  
+  // Customer information
+  customerName      String?             @db.VarChar(255)
+  customerLocation  String?             @db.VarChar(255)
+  notes             String?             @db.Text
+  
+  // Audit fields
+  createdBy         Int?                // User ID who initiated (for audit trail)
+  approvedBy        Int?                // KASIR who approved (if workflow requires)
+  
+  // Relations
+  user              User                @relation("UserTransactions", fields: [userId], references: [id], onDelete: Restrict)
+  posSession        PosSession?         @relation("SessionTransactions", fields: [posSessionId], references: [id], onDelete: SetNull)
+  details           TransactionDetail[]
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  // Performance indexes for daily reports and queries
+  @@index([userId])
+  @@index([createdAt, status]) // Critical for daily revenue reports
+  @@index([userId, createdAt]) // For kasir/mitra transaction history
+  @@index([status])
+  @@index([posSessionId])
+  @@index([midtransOrderId])
+  @@index([paymentMethod, status]) // For payment method analytics
+}
+
+// TransactionDetail: Line items with inventory snapshots
+// Captures item state at transaction time for auditability
+model TransactionDetail {
+  id             Int         @id @default(autoincrement())
+  transactionId  Int
+  itemId         Int
+  
+  // Quantity and pricing (snapshot at transaction time)
+  jumlah         Int         // Quantity purchased
+  hargaSatuan    Decimal     @db.Decimal(10, 2) // Unit price at time of sale
+  subtotal       Decimal     @db.Decimal(10, 2) // jumlah * hargaSatuan
+  
+  // Inventory audit trail
+  stokSebelum    Int         // Stock before transaction
+  stokSesudah    Int         // Stock after transaction (stokSebelum - jumlah)
+  
+  // Relations
+  transaction    Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  item           Item        @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@index([transactionId])
+  @@index([itemId])
+  @@index([itemId, transactionId]) // For item sales reports
+}
+
+// Settings: Single-row configuration table (runtime-editable fees and settings)
+// This is the SINGLE SOURCE OF TRUTH for all fee percentages and operational settings
+// WARNING: Never hardcode fee percentages in application code!
+// 
+// NOTE: Sensitive credentials (Midtrans, Firebase) are stored in environment variables,
+// NOT in this database table for security reasons.
+model Settings {
+  id                          Int      @id @default(1) // Enforce single row with CHECK constraint
+  
+  // ========== FEE CONFIGURATION (CRITICAL FOR REVENUE CALCULATION) ==========
+  // These fields MUST be read at payment creation and webhook processing
+  qrisFeePercent              Decimal  @default(0.7) @db.Decimal(5, 2) // QRIS payment gateway fee (e.g., 0.7%)
+  platformCommissionPercent   Decimal  @default(10.0) @db.Decimal(5, 2) // Platform commission from mitra (e.g., 10%)
+  
+  // ========== PAYMENT SETTINGS ==========
+  defaultPaymentMethod        String   @default("QRIS") @db.VarChar(10) // QRIS or CASH
+  paymentTimeoutMinutes       Int      @default(5) // Midtrans QRIS expiry time
+  
+  // ========== CAFETERIA BRANDING ==========
+  cafeteriaName               String   @default("Cafetaria Sekolah") @db.VarChar(255)
+  cafeteriaTagline            String   @default("Delicious & Fresh") @db.VarChar(255)
+  heroTitle                   String   @default("Selamat Datang di Cafetaria Kami") @db.VarChar(500)
+  heroDescription             String?  @db.VarChar(1000) // Changed from Text to VarChar to support default value
+  logoUrl                     String?  @db.VarChar(500)
+  footerText                  String   @default("© 2025 Cafetaria. All rights reserved.") @db.VarChar(1000)
+  
+  // ========== CONTACT INFORMATION ==========
+  kasirWhatsapp               String   @default("") @db.VarChar(20) // Format: 628XXXXXXXXX
+  contactInfo                 String?  @db.Text
+  namaPengurus                String   @default("Admin") @db.VarChar(255)
+  
+  // Audit
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+}
