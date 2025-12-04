@@ -65,19 +65,64 @@ model User {
   id           Int           @id @default(autoincrement())
   name         String        @db.VarChar(255)
   email        String        @unique @db.VarChar(255)
-  password     String        @db.VarChar(255)
+  password     String?       @db.VarChar(255) // Optional for OAuth users
   role         Role          @default(USER)
+  emailVerified DateTime?    // For OAuth
+  image        String?       @db.VarChar(500) // Google profile picture
   
   // Relations
   items        Item[]        @relation("MitraItems")
   transactions Transaction[] @relation("UserTransactions")
   posSessions  PosSession[]  @relation("KasirSessions")
+  accounts     Account[]     // OAuth accounts
+  sessions     Session[]     // OAuth sessions
   
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   @@index([role])
   @@index([email])
+}
+
+// OAuth Account model (for Google, Facebook, etc.)
+model Account {
+  id                 Int     @id @default(autoincrement())
+  userId             Int
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// Session model (for OAuth session management)
+model Session {
+  id           Int      @id @default(autoincrement())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Verification Token (for email verification)
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 // Item: Products sold by student partners (MITRA)
