@@ -54,6 +54,13 @@ export async function GET(req: NextRequest) {
                 id: true,
                 namaBarang: true,
                 fotoUrl: true,
+                mitraId: true,
+                mitra: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -179,11 +186,87 @@ export async function GET(req: NextRequest) {
       user: t.user,
     }));
 
+    // Calculate mitra revenue breakdown
+    const mitraSales: {
+      [key: number]: {
+        id: number;
+        name: string;
+        revenue: number;
+        quantity: number;
+      };
+    } = {};
+
+    const mitraRevenueMap: {
+      [key: number]: {
+        grossRevenue: number;
+        paymentFee: number;
+        platformFee: number;
+        netRevenue: number;
+      };
+    } = {};
+
+    transactions.forEach((transaction: any) => {
+      const txPaymentFee = Number(transaction.paymentFee || 0);
+      const txPlatformFee = Number(transaction.platformFee || 0);
+      const txGross = Number(transaction.grossAmount);
+
+      transaction.details.forEach((detail: any) => {
+        const mitraId = detail.item.mitraId;
+        const mitraName = detail.item.mitra?.name || "Unknown";
+        const detailGross = Number(detail.subtotal);
+
+        // Calculate proportional fees for this detail
+        const detailRatio = txGross > 0 ? detailGross / txGross : 0;
+        const detailPaymentFee = txPaymentFee * detailRatio;
+        const detailPlatformFee = txPlatformFee * detailRatio;
+        const detailNet = detailGross - detailPaymentFee;
+        const detailMitraRevenue = detailNet - detailPlatformFee;
+
+        if (mitraId) {
+          if (!mitraSales[mitraId]) {
+            mitraSales[mitraId] = {
+              id: mitraId,
+              name: mitraName,
+              revenue: 0,
+              quantity: 0,
+            };
+            mitraRevenueMap[mitraId] = {
+              grossRevenue: 0,
+              paymentFee: 0,
+              platformFee: 0,
+              netRevenue: 0,
+            };
+          }
+          mitraSales[mitraId].revenue += detailGross;
+          mitraSales[mitraId].quantity += detail.jumlah;
+
+          mitraRevenueMap[mitraId].grossRevenue += detailGross;
+          mitraRevenueMap[mitraId].paymentFee += detailPaymentFee;
+          mitraRevenueMap[mitraId].platformFee += detailPlatformFee;
+          mitraRevenueMap[mitraId].netRevenue += detailMitraRevenue;
+        }
+      });
+    });
+
+    const allMitras = Object.values(mitraSales)
+      .sort((a, b) => b.revenue - a.revenue)
+      .map((m) => ({
+        id: m.id,
+        name: m.name,
+        revenue: m.revenue,
+        quantity: m.quantity,
+        grossRevenue: mitraRevenueMap[m.id]?.grossRevenue || 0,
+        paymentFee: mitraRevenueMap[m.id]?.paymentFee || 0,
+        platformFee: mitraRevenueMap[m.id]?.platformFee || 0,
+        netRevenue: mitraRevenueMap[m.id]?.netRevenue || 0,
+      }));
+
     return NextResponse.json({
       stats,
       chartData,
       topProducts,
       recentTransactions,
+      allMitras,
       period,
     });
   } catch (error) {

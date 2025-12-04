@@ -81,13 +81,34 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Calculate stats
+    // Calculate stats with fee breakdown
     const stats = {
       totalProducts: items.length,
       totalStock: items.reduce((sum, item) => sum + item.jumlahStok, 0),
       totalSold: 0,
       totalRevenue: 0,
+      // Pembagian Hasil Mitra
+      totalPaymentFee: 0,
+      totalPlatformFee: 0,
+      netRevenue: 0, // Pendapatan bersih yang diterima mitra
     };
+
+    // Get transactions to calculate fees
+    const mitraTransactions: any[] = [];
+    items.forEach((item) => {
+      item.transactionDetails.forEach((detail) => {
+        const transaction = detail.transaction as any;
+        if (!mitraTransactions.find((t) => t.id === (transaction as any).id)) {
+          // Find full transaction data
+          const fullTx = items
+            .flatMap((i) => i.transactionDetails)
+            .find((d) => d.transactionId === detail.transactionId);
+          if (fullTx) {
+            mitraTransactions.push(fullTx);
+          }
+        }
+      });
+    });
 
     // Process items to get sales data
     const productsWithSales = items.map((item) => {
@@ -147,6 +168,32 @@ export async function GET(request: NextRequest) {
     const topProducts = productsWithSales
       .sort((a, b) => b.soldInPeriod - a.soldInPeriod)
       .slice(0, 5);
+
+    // Get mitra transactions to calculate fees
+    const mitraTransactionIds = items.flatMap((item) =>
+      item.transactionDetails.map((detail) => detail.transactionId)
+    );
+    const uniqueTransactionIds = [...new Set(mitraTransactionIds)];
+
+    const fullTransactions = await prisma.transaction.findMany({
+      where: {
+        id: { in: uniqueTransactionIds },
+        status: "COMPLETED",
+      },
+      select: {
+        paymentFee: true,
+        platformFee: true,
+        mitraRevenue: true,
+        grossAmount: true,
+      },
+    });
+
+    // Calculate total fees and net revenue for this mitra
+    fullTransactions.forEach((tx) => {
+      stats.totalPaymentFee += Number(tx.paymentFee || 0);
+      stats.totalPlatformFee += Number(tx.platformFee || 0);
+      stats.netRevenue += Number(tx.mitraRevenue || 0);
+    });
 
     return NextResponse.json({
       stats,

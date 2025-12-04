@@ -47,6 +47,10 @@ interface ReportData {
     totalStock: number;
     totalSold: number;
     totalRevenue: number;
+    // Pembagian Hasil Mitra
+    totalPaymentFee: number;
+    totalPlatformFee: number;
+    netRevenue: number;
   };
   products: ProductReport[];
   chartData: ChartDataPoint[];
@@ -93,6 +97,9 @@ export function MitraReportPage() {
     totalStock: 0,
     totalSold: 0,
     totalRevenue: 0,
+    totalPaymentFee: 0,
+    totalPlatformFee: 0,
+    netRevenue: 0,
   };
 
   const periodLabels: Record<PeriodType, string> = {
@@ -256,6 +263,71 @@ export function MitraReportPage() {
             </p>
           </motion.div>
         </div>
+
+        {/* Pembagian Hasil Mitra Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-5 lg:p-6 mb-6 sm:mb-8"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <DollarSign className="w-5 h-5 text-green-600" />
+            <h2 className="text-base sm:text-lg font-bold text-gray-900">
+              Pembagian Hasil Saya
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {/* Total Pendapatan Kotor */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg sm:rounded-xl p-3 sm:p-4">
+              <p className="text-xs sm:text-sm text-blue-700 mb-1">
+                Total Penjualan
+              </p>
+              <p className="text-sm sm:text-base lg:text-lg font-bold text-blue-900 truncate">
+                {formatCurrency(stats.totalRevenue)}
+              </p>
+            </div>
+
+            {/* Biaya Payment Gateway */}
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg sm:rounded-xl p-3 sm:p-4">
+              <p className="text-xs sm:text-sm text-orange-700 mb-1">
+                - Biaya Payment
+              </p>
+              <p className="text-sm sm:text-base lg:text-lg font-bold text-orange-900 truncate">
+                {formatCurrency(stats.totalPaymentFee)}
+              </p>
+            </div>
+
+            {/* Biaya Platform */}
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg sm:rounded-xl p-3 sm:p-4">
+              <p className="text-xs sm:text-sm text-red-700 mb-1">
+                - Fee Cafetaria
+              </p>
+              <p className="text-sm sm:text-base lg:text-lg font-bold text-red-900 truncate">
+                {formatCurrency(stats.totalPlatformFee)}
+              </p>
+            </div>
+
+            {/* Pendapatan Bersih */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg sm:rounded-xl p-3 sm:p-4 border-2 border-green-300">
+              <p className="text-xs sm:text-sm text-green-700 mb-1">
+                💰 Saya Terima
+              </p>
+              <p className="text-sm sm:text-base lg:text-lg font-bold text-green-900 truncate">
+                {formatCurrency(stats.netRevenue)}
+              </p>
+            </div>
+          </div>
+
+          {/* Summary Formula */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <p className="text-xs sm:text-sm text-gray-600">
+              <span className="font-semibold">Perhitungan:</span> Total
+              Penjualan - Biaya Payment - Fee Cafetaria = Pendapatan Bersih Anda
+            </p>
+          </div>
+        </motion.div>
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 sm:mb-8">

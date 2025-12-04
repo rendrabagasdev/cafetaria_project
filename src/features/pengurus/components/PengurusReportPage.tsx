@@ -23,6 +23,7 @@ import { formatCurrency } from "@/lib/cart-utils";
 import { SalesChart } from "@/features/mitra/components/SalesChart";
 import { TopProductsChart } from "@/features/mitra/components/TopProductsChart";
 import { MitraPerformanceChart } from "@/features/mitra/components/MitraPerformanceChart";
+import { MitraRevenueTable } from "@/components/reports/MitraRevenueTable";
 
 interface TopProduct {
   id: number;
@@ -37,6 +38,10 @@ interface MitraPerformance {
   name: string;
   revenue: number;
   quantity: number;
+  grossRevenue: number;
+  paymentFee: number;
+  platformFee: number;
+  netRevenue: number;
 }
 
 interface ChartDataPoint {
@@ -61,6 +66,7 @@ interface ReportData {
   chartData: ChartDataPoint[];
   topProducts: TopProduct[];
   topMitras: MitraPerformance[];
+  allMitras: MitraPerformance[];
   period: string;
 }
 
@@ -389,6 +395,22 @@ export function PengurusReportPage() {
             Performa Mitra
           </h3>
           <MitraPerformanceChart mitras={reportData?.topMitras || []} />
+        </motion.div>
+
+        {/* Tabel Pendapatan Per Mitra */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.75 }}
+          className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-5 lg:p-6 mb-6 sm:mb-8"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <DollarSign className="w-5 h-5 text-green-600" />
+            <h3 className="text-base sm:text-lg font-bold text-gray-900">
+              Detail Pendapatan Per Mitra
+            </h3>
+          </div>
+          <MitraRevenueTable mitras={reportData?.allMitras || []} />
         </motion.div>
       </div>
     </div>
