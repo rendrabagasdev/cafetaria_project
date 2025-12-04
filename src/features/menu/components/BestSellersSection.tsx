@@ -54,7 +54,9 @@ export function BestSellersSection({
           <div className="flex items-center gap-2">
             <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 animate-bounce" />
             <p className="text-xs sm:text-sm text-gray-700 font-semibold">
-              Produk paling <span className="text-orange-600 font-black">LARIS</span> minggu ini!
+              Produk paling{" "}
+              <span className="text-orange-600 font-black">LARIS</span> minggu
+              ini!
             </p>
           </div>
         </div>

@@ -36,7 +36,12 @@ export function FullMenuSection({
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", duration: 0.8, delay: 0.3, bounce: 0.6 }}
+            transition={{
+              type: "spring",
+              duration: 0.8,
+              delay: 0.3,
+              bounce: 0.6,
+            }}
             className="relative bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-2xl shadow-green-500/50"
           >
             <Package className="w-6 h-6 sm:w-9 sm:h-9 text-white" />

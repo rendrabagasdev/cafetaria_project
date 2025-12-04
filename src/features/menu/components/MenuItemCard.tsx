@@ -87,7 +87,7 @@ export function MenuItemCard({
       <div className="relative h-36 sm:h-48 lg:h-56 bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 overflow-hidden">
         {/* Shine Effect */}
         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-10" />
-        
+
         <Image
           src={item.fotoUrl}
           alt={item.namaBarang}
@@ -97,7 +97,7 @@ export function MenuItemCard({
           }`}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         />
-        
+
         {/* Vignette Effect */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         {isOutOfStock && (
@@ -122,7 +122,9 @@ export function MenuItemCard({
           </div>
           <div className="relative">
             <div className="text-xs sm:text-sm text-gray-700 bg-gradient-to-br from-green-100 via-emerald-100 to-green-100 border border-green-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-bold whitespace-nowrap shadow-sm">
-              <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Stok: {item.jumlahStok}</span>
+              <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                Stok: {item.jumlahStok}
+              </span>
             </div>
           </div>
         </div>
@@ -135,7 +137,9 @@ export function MenuItemCard({
             className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full w-fit shadow-md"
           >
             <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-pulse" />
-            <span className="hidden sm:inline">{item._count.transactionDetails}x dipesan</span>
+            <span className="hidden sm:inline">
+              {item._count.transactionDetails}x dipesan
+            </span>
             <span className="sm:hidden">{item._count.transactionDetails}x</span>
           </motion.div>
         )}
@@ -158,7 +162,9 @@ export function MenuItemCard({
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
           )}
           <ShoppingCart className="w-3.5 h-3.5 sm:w-5 sm:h-5 relative z-10" />
-          <span className="relative z-10">{isOutOfStock ? "Habis" : "+ Keranjang"}</span>
+          <span className="relative z-10">
+            {isOutOfStock ? "Habis" : "+ Keranjang"}
+          </span>
         </motion.button>
       </div>
     </motion.div>

@@ -29,21 +29,36 @@ export function HeroSection() {
         </motion.div>
         <motion.div
           animate={{ y: [0, -25, 0], rotate: [0, -5, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 0.5,
+          }}
           className="absolute top-32 right-1/4 text-5xl"
         >
           🍔
         </motion.div>
         <motion.div
           animate={{ y: [0, -15, 0], rotate: [0, 8, 0] }}
-          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          transition={{
+            duration: 3.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
           className="absolute bottom-32 left-1/3 text-5xl"
         >
           🥤
         </motion.div>
         <motion.div
           animate={{ y: [0, -30, 0], rotate: [0, -8, 0] }}
-          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+          transition={{
+            duration: 4.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1.5,
+          }}
           className="absolute bottom-24 right-1/3 text-6xl"
         >
           🍰
@@ -65,7 +80,9 @@ export function HeroSection() {
             className="inline-flex items-center gap-2 sm:gap-3 bg-white/20 backdrop-blur-md px-5 sm:px-7 py-3 sm:py-4 rounded-full shadow-2xl border border-white/30"
           >
             <Utensils className="w-5 h-5 sm:w-7 sm:h-7 animate-bounce" />
-            <span className="font-black text-sm sm:text-lg tracking-wide">Cafetaria</span>
+            <span className="font-black text-sm sm:text-lg tracking-wide">
+              Cafetaria
+            </span>
             <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 animate-pulse" />
           </motion.div>
 
@@ -97,8 +114,8 @@ export function HeroSection() {
           >
             Nikmati berbagai pilihan{" "}
             <span className="font-bold text-yellow-300">makanan</span> dan{" "}
-            <span className="font-bold text-yellow-300">minuman segar</span> yang
-            tersedia untuk Anda 🎉
+            <span className="font-bold text-yellow-300">minuman segar</span>{" "}
+            yang tersedia untuk Anda 🎉
           </motion.p>
 
           {/* Decorative Elements */}
