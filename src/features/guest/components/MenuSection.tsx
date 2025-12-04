@@ -28,14 +28,14 @@ export function MenuSection({ items, bestSellers, loading }: MenuSectionProps) {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
                 className="bg-white rounded-xl shadow-md overflow-hidden animate-pulse"
               >
-                <div className="h-56 bg-gray-200"></div>
-                <div className="p-4">
+                <div className="h-48 bg-gray-200"></div>
+                <div className="p-3">
                   <div className="h-4 bg-gray-200 rounded mb-2"></div>
                   <div className="h-6 bg-gray-200 rounded mb-4"></div>
                   <div className="h-8 bg-gray-200 rounded"></div>
@@ -95,7 +95,7 @@ export function MenuSection({ items, bestSellers, loading }: MenuSectionProps) {
               <div className="h-1 flex-1 bg-gradient-to-r from-yellow-400 to-transparent rounded"></div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
               {bestSellers.map((item, index) => (
                 <MenuItemCard
                   key={item.id}

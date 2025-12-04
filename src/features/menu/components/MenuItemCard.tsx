@@ -84,7 +84,7 @@ export function MenuItemCard({
       )}
 
       {/* Image with Overlay */}
-      <div className="relative h-36 sm:h-48 lg:h-56 bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 overflow-hidden">
+      <div className="relative h-32 sm:h-48 lg:h-56 bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 overflow-hidden">
         {/* Shine Effect */}
         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-10" />
 
@@ -108,20 +108,20 @@ export function MenuItemCard({
       </div>
 
       {/* Content */}
-      <div className="p-3 sm:p-5 space-y-2 sm:space-y-3">
-        <h3 className="text-sm sm:text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-green-600 transition-colors leading-tight">
+      <div className="p-2.5 sm:p-5 space-y-1.5 sm:space-y-3">
+        <h3 className="text-xs sm:text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-green-600 transition-colors leading-tight">
           {item.namaBarang}
         </h3>
 
-        <div className="flex justify-between items-center gap-2">
+        <div className="flex justify-between items-center gap-1.5 sm:gap-2">
           <div className="relative">
-            <div className="text-lg sm:text-2xl font-black bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
+            <div className="text-base sm:text-2xl font-black bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
               {formatCurrency(Number(item.hargaSatuan))}
             </div>
-            <div className="absolute -bottom-0.5 left-0 right-0 h-1 bg-gradient-to-r from-green-600/20 via-emerald-600/20 to-teal-600/20 rounded-full" />
+            <div className="absolute -bottom-0.5 left-0 right-0 h-0.5 sm:h-1 bg-gradient-to-r from-green-600/20 via-emerald-600/20 to-teal-600/20 rounded-full" />
           </div>
           <div className="relative">
-            <div className="text-xs sm:text-sm text-gray-700 bg-gradient-to-br from-green-100 via-emerald-100 to-green-100 border border-green-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-bold whitespace-nowrap shadow-sm">
+            <div className="text-[10px] sm:text-sm text-gray-700 bg-gradient-to-br from-green-100 via-emerald-100 to-green-100 border border-green-200 px-1.5 sm:px-3 py-0.5 sm:py-1.5 rounded-full font-bold whitespace-nowrap shadow-sm">
               <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                 Stok: {item.jumlahStok}
               </span>
@@ -134,9 +134,9 @@ export function MenuItemCard({
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full w-fit shadow-md"
+            className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 sm:px-3 py-0.5 sm:py-1.5 rounded-full w-fit shadow-md"
           >
-            <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-pulse" />
+            <Flame className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 animate-pulse" />
             <span className="hidden sm:inline">
               {item._count.transactionDetails}x dipesan
             </span>
