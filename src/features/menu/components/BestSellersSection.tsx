@@ -27,24 +27,36 @@ export function BestSellersSection({
       animate={{ opacity: 1, y: 0 }}
       className="mb-12 sm:mb-16"
     >
-      {/* Section Header - iOS Style */}
-      <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+      {/* Section Header - Enhanced iOS Style */}
+      <div className="flex items-center gap-3 sm:gap-5 mb-6 sm:mb-8">
         <motion.div
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: "spring", duration: 0.8 }}
-          className="bg-gradient-to-r from-yellow-500 to-orange-500 p-2.5 sm:p-3 rounded-2xl shadow-xl"
+          transition={{ type: "spring", duration: 0.8, bounce: 0.6 }}
+          className="relative bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-2xl shadow-yellow-500/50"
         >
-          <Star className="w-6 h-6 sm:w-8 sm:h-8 text-white fill-white" />
+          <Star className="w-6 h-6 sm:w-9 sm:h-9 text-white fill-white animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent rounded-2xl sm:rounded-3xl" />
         </motion.div>
         <div className="flex-1">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-            Best Sellers
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-600 mt-1 flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500" />
-            Produk paling laris minggu ini
-          </p>
+          <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 bg-clip-text text-transparent">
+              Best Sellers
+            </h2>
+            <motion.div
+              animate={{ rotate: [0, 15, -15, 0] }}
+              transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+              className="text-2xl sm:text-3xl"
+            >
+              🔥
+            </motion.div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 animate-bounce" />
+            <p className="text-xs sm:text-sm text-gray-700 font-semibold">
+              Produk paling <span className="text-orange-600 font-black">LARIS</span> minggu ini!
+            </p>
+          </div>
         </div>
       </div>
 
