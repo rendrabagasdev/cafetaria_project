@@ -170,11 +170,7 @@ export function MenuSection({ items, bestSellers, loading }: MenuSectionProps) {
               ) : (
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                   {items.map((item, index) => (
-                    <MenuItemCard
-                      key={item.id}
-                      item={item}
-                      index={index}
-                    />
+                    <MenuItemCard key={item.id} item={item} index={index} />
                   ))}
                 </div>
               )}
