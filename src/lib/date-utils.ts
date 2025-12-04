@@ -86,12 +86,13 @@ export function getThisMonthRange(): { start: Date; end: Date } {
  * @example
  * formatDateIndonesian(new Date()) // "3 Desember 2025"
  */
-export function formatDateIndonesian(date: Date): string {
+export function formatDateIndonesian(date: Date | string): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
   return new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(date);
+  }).format(dateObj);
 }
 
 /**
@@ -100,14 +101,15 @@ export function formatDateIndonesian(date: Date): string {
  * @example
  * formatDateTimeIndonesian(new Date()) // "3 Desember 2025, 14:30"
  */
-export function formatDateTimeIndonesian(date: Date): string {
+export function formatDateTimeIndonesian(date: Date | string): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
   return new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
     month: "long",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(date);
+  }).format(dateObj);
 }
 
 /**
@@ -116,8 +118,9 @@ export function formatDateTimeIndonesian(date: Date): string {
  * @example
  * formatTime(new Date()) // "14:30:45"
  */
-export function formatTime(date: Date): string {
-  return date.toLocaleTimeString("id-ID", {
+export function formatTime(date: Date | string): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return dateObj.toLocaleTimeString("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -130,8 +133,9 @@ export function formatTime(date: Date): string {
  * @example
  * formatDate(new Date()) // "3 Des 2025"
  */
-export function formatDate(date: Date): string {
-  return date.toLocaleDateString("id-ID", {
+export function formatDate(date: Date | string): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return dateObj.toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",

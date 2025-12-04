@@ -370,7 +370,7 @@ export function KasirReportPage() {
         </div>
 
         {/* Recent Transactions Table */}
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden mb-6 sm:mb-8">
           <div className="p-3 sm:p-4 lg:p-6 border-b">
             <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">
               Transaksi Terbaru
@@ -461,7 +461,7 @@ export function KasirReportPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden mb-6 sm:mb-8"
+          className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden  mb-6 sm:mb-8 "
         >
           <div className="p-3 sm:p-4 lg:p-6 border-b">
             <div className="flex items-center gap-2">

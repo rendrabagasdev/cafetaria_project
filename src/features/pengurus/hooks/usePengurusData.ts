@@ -29,12 +29,18 @@ export function usePengurusData() {
     try {
       if (tab === "transactions") {
         const res = await fetch("/api/transactions");
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
         setTransactions(data.transactions || []);
       } else if (tab === "users") {
         const roleParam =
           userRoleFilter !== "ALL" ? `?role=${userRoleFilter}` : "";
         const res = await fetch(`/api/users${roleParam}`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
         setUsers(data.users || []);
       } else {
@@ -43,10 +49,14 @@ export function usePengurusData() {
         const res = await fetch(
           `/api/items${status ? `?status=${status}` : ""}`
         );
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
         setItems(data.items || []);
       }
     } catch (err) {
+      console.error("usePengurusData error:", err);
       setError(err instanceof Error ? err.message : "Gagal memuat data");
     } finally {
       setIsLoading(false);

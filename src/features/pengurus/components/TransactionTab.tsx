@@ -117,7 +117,7 @@ export function TransactionTab({ transactions }: TransactionTabProps) {
                   <span className="text-gray-500 ml-2">x{detail.jumlah}</span>
                 </div>
                 <span className="font-semibold text-gray-700">
-                  {formatCurrency(detail.subtotal)}
+                  {formatCurrency(Number(detail.subtotal))}
                 </span>
               </div>
             ))}
@@ -127,7 +127,7 @@ export function TransactionTab({ transactions }: TransactionTabProps) {
           <div className="border-t border-gray-200 mt-4 pt-4 flex items-center justify-between">
             <span className="font-bold text-lg">Total</span>
             <span className="font-bold text-2xl text-green-600">
-              {formatCurrency(transaction.grossAmount)}
+              {formatCurrency(Number(transaction.grossAmount))}
             </span>
           </div>
 

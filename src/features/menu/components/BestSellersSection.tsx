@@ -49,7 +49,7 @@ export function BestSellersSection({
       </div>
 
       {/* Items Grid - Responsive */}
-      <div className="grid gap-4 sm:gap-5 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-5 lg:gap-6 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {items.map((item, index) => (
           <motion.div
             key={item.id}
