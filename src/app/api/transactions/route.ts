@@ -247,8 +247,14 @@ export async function POST(request: NextRequest) {
     );
 
     // Determine transaction status
+    // USER role: PENDING (needs approval)
+    // KASIR role: CASH (immediate) or PENDING (QRIS awaiting payment)
     const status: TransactionStatus =
-      paymentMethod === "CASH" ? "CASH" : "PENDING";
+      token.role === "USER"
+        ? "PENDING" // User orders need approval
+        : paymentMethod === "CASH"
+        ? "CASH" // Kasir cash payment is immediate
+        : "PENDING"; // Kasir QRIS awaiting payment
 
     // ✅ OPTIMIZATION: Get PosSession ID BEFORE transaction
     let posSessionDbId: number | null = null;
@@ -341,8 +347,11 @@ export async function POST(request: NextRequest) {
           })),
         });
 
-        // Deduct stock for all items (only for CASH, QRIS waits for webhook)
-        if (paymentMethod === "CASH") {
+        // Deduct stock only for KASIR's CASH transactions
+        // - USER transactions are PENDING (need approval, no stock deduction yet)
+        // - KASIR's QRIS transactions are PENDING (awaiting payment webhook)
+        // - KASIR's CASH transactions are immediate (deduct stock now)
+        if (token.role === "KASIR" && paymentMethod === "CASH") {
           for (const cartItem of items) {
             await deductStock(cartItem.itemId, cartItem.quantity, tx);
           }

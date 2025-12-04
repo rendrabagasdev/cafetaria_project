@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { Item } from "../types";
 import { MenuItemCard } from "./MenuItemCard";
-import Image from "next/image";
 
 interface MenuSectionProps {
   items: Item[];
@@ -169,57 +168,13 @@ export function MenuSection({ items, bestSellers, loading }: MenuSectionProps) {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                   {items.map((item, index) => (
-                    <motion.div
+                    <MenuItemCard
                       key={item.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      whileHover={{ x: 5 }}
-                      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all border border-gray-200"
-                    >
-                      <div className="flex flex-col sm:flex-row">
-                        {/* Image */}
-                        <div className="relative w-full sm:w-48 h-48 flex-shrink-0">
-                          <Image
-                            src={item.fotoUrl}
-                            alt={item.namaBarang}
-                            fill
-                            className="object-cover"
-                            sizes="192px"
-                          />
-                          {item.jumlahStok < 5 && item.jumlahStok > 0 && (
-                            <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
-                              Stok terbatas
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 p-4 flex flex-col justify-between">
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">
-                              {item.namaBarang}
-                            </h3>
-                            <div className="flex flex-wrap items-center gap-4">
-                              <span className="text-2xl font-bold text-green-600">
-                                Rp {item.hargaSatuan.toLocaleString("id-ID")}
-                              </span>
-                              <span
-                                className={`text-sm px-3 py-1 rounded-full ${
-                                  item.jumlahStok > 0
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-red-100 text-red-700"
-                                }`}
-                              >
-                                Stok: {item.jumlahStok}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
+                      item={item}
+                      index={index}
+                    />
                   ))}
                 </div>
               )}
