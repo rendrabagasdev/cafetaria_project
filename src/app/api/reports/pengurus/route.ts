@@ -81,17 +81,31 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Calculate stats
+    // Calculate stats with revenue breakdown
     const stats = {
       totalTransactions: transactions.length,
       totalRevenue: 0,
       totalItems: allItems.length,
       activeItems: allItems.filter((i: any) => i.status === "TERSEDIA").length,
       lowStock: allItems.filter((i: any) => i.jumlahStok < 10).length,
+      // Pembagian Hasil
+      totalPaymentFee: 0,
+      totalNetRevenue: 0,
+      totalPlatformFee: 0,
+      totalMitraRevenue: 0,
     };
 
     transactions.forEach((t: any) => {
-      stats.totalRevenue += Number(t.grossAmount);
+      const gross = Number(t.grossAmount);
+      const paymentFee = Number(t.paymentFee || 0);
+      const platformFee = Number(t.platformFee || 0);
+      const mitraRevenue = Number(t.mitraRevenue || 0);
+
+      stats.totalRevenue += gross;
+      stats.totalPaymentFee += paymentFee;
+      stats.totalNetRevenue += gross - paymentFee;
+      stats.totalPlatformFee += platformFee;
+      stats.totalMitraRevenue += mitraRevenue;
     });
 
     // Get daily sales data for chart

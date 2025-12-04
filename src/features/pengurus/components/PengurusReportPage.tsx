@@ -52,6 +52,11 @@ interface ReportData {
     totalItems: number;
     activeItems: number;
     lowStock: number;
+    // Pembagian Hasil
+    totalPaymentFee: number;
+    totalNetRevenue: number;
+    totalPlatformFee: number;
+    totalMitraRevenue: number;
   };
   chartData: ChartDataPoint[];
   topProducts: TopProduct[];
@@ -91,6 +96,10 @@ export function PengurusReportPage() {
     totalItems: 0,
     activeItems: 0,
     lowStock: 0,
+    totalPaymentFee: 0,
+    totalNetRevenue: 0,
+    totalPlatformFee: 0,
+    totalMitraRevenue: 0,
   };
 
   const periodLabels: Record<PeriodType, string> = {
@@ -273,6 +282,72 @@ export function PengurusReportPage() {
             </p>
           </motion.div>
         </div>
+
+        {/* Pembagian Hasil Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-5 lg:p-6 mb-6 sm:mb-8"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <DollarSign className="w-5 h-5 text-green-600" />
+            <h2 className="text-base sm:text-lg font-bold text-gray-900">
+              Pembagian Hasil
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {/* Total Pendapatan Kotor */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg sm:rounded-xl p-3 sm:p-4">
+              <p className="text-xs sm:text-sm text-blue-700 mb-1">
+                Total Pendapatan
+              </p>
+              <p className="text-sm sm:text-base lg:text-xl font-bold text-blue-900 truncate">
+                {formatCurrency(stats.totalRevenue)}
+              </p>
+            </div>
+
+            {/* Biaya Payment Gateway */}
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg sm:rounded-xl p-3 sm:p-4">
+              <p className="text-xs sm:text-sm text-orange-700 mb-1">
+                Biaya Payment
+              </p>
+              <p className="text-sm sm:text-base lg:text-xl font-bold text-orange-900 truncate">
+                {formatCurrency(stats.totalPaymentFee)}
+              </p>
+            </div>
+
+            {/* Bagian Platform/Pengurus */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg sm:rounded-xl p-3 sm:p-4">
+              <p className="text-xs sm:text-sm text-green-700 mb-1">
+                Bagian Pengurus
+              </p>
+              <p className="text-sm sm:text-base lg:text-xl font-bold text-green-900 truncate">
+                {formatCurrency(stats.totalPlatformFee)}
+              </p>
+            </div>
+
+            {/* Bagian Mitra */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg sm:rounded-xl p-3 sm:p-4">
+              <p className="text-xs sm:text-sm text-purple-700 mb-1">
+                Bagian Mitra
+              </p>
+              <p className="text-sm sm:text-base lg:text-xl font-bold text-purple-900 truncate">
+                {formatCurrency(stats.totalMitraRevenue)}
+              </p>
+            </div>
+          </div>
+
+          {/* Summary Formula */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <p className="text-xs sm:text-sm text-gray-600">
+              <span className="font-semibold">Formula:</span> Total Pendapatan -
+              Biaya Payment = Pendapatan Bersih → Bagian Pengurus (10%) + Bagian
+              Mitra (90%)
+            </p>
+          </div>
+        </motion.div>
 
         {/* Charts Row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 sm:mb-8">
